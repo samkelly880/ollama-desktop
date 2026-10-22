@@ -6,6 +6,9 @@ import { ChatView } from './components/ChatView'
 import { useChat } from './useChat'
 import { SettingsPanel } from './components/SettingsPanel'
 import { useModelSettings } from './useModelSettings'
+import { InstallModel } from './components/InstallModel'
+import { ConfirmDialog } from './components/ConfirmDialog'
+import { formatBytes } from '../../shared/format'
 import { toChatOptions } from '../../shared/settings'
 
 type Status = 'checking' | 'online' | 'offline'
@@ -21,6 +24,9 @@ export default function App(): React.JSX.Element {
   const chat = useChat()
   const modelSettings = useModelSettings(selected)
   const [showSettings, setShowSettings] = useState(false)
+  const [toDelete, setToDelete] = useState<ModelInfo | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const refresh = useCallback(async () => {
     setChecking(true)
@@ -39,6 +45,19 @@ export default function App(): React.JSX.Element {
       cur && m.value.models.some((x) => x.name === cur) ? cur : (m.value.models[0]?.name ?? null)
     )
   }, [])
+
+  const confirmDelete = async (): Promise<void> => {
+    if (!toDelete) return
+    setDeleting(true)
+    const res = await window.api.ollama.delete(toDelete.name)
+    setDeleting(false)
+    if (!res.ok) {
+      setDeleteError(res.error.message)
+      return
+    }
+    setToDelete(null)
+    await refresh()
+  }
 
   useEffect(() => {
     void refresh()
@@ -68,7 +87,22 @@ export default function App(): React.JSX.Element {
                 ↻
               </button>
             </div>
-            <ModelList models={models} running={running} selected={selected} onSelect={setSelected} />
+            <ModelList
+              models={models}
+              running={running}
+              selected={selected}
+              onSelect={setSelected}
+              onDelete={(m) => {
+                setDeleteError('')
+                setToDelete(m)
+              }}
+            />
+            <InstallModel
+              installed={models.map((m) => m.name)}
+              onInstalled={(name) => {
+                void refresh().then(() => setSelected(name.includes(':') ? name : `${name}:latest`))
+              }}
+            />
           </aside>
           <main className="main">
             <ChatView
@@ -108,6 +142,23 @@ export default function App(): React.JSX.Element {
             )}
           </main>
         </div>
+      )}
+
+      {toDelete && (
+        <ConfirmDialog
+          title={`Uninstall ${toDelete.name}?`}
+          confirmLabel="Uninstall"
+          danger
+          busy={deleting}
+          onCancel={() => setToDelete(null)}
+          onConfirm={() => void confirmDelete()}
+        >
+          <p>
+            This deletes the model from disk and frees about {formatBytes(toDelete.size)}. You can install it again
+            later, but it will need to be downloaded again.
+          </p>
+          {deleteError && <div className="error-text">{deleteError}</div>}
+        </ConfirmDialog>
       )}
     </div>
   )

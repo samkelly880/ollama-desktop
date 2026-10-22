@@ -40,7 +40,9 @@ const api: DesktopApi = {
   ollama: {
     version: () => ipcRenderer.invoke('ollama:version'),
     models: () => ipcRenderer.invoke('ollama:models'),
-    chat: (req, onChunk) => startStream('chat', req, onChunk)
+    chat: (req, onChunk) => startStream('chat', req, onChunk),
+    pull: (model, onProgress) => startStream('pull', model, onProgress),
+    delete: (model) => ipcRenderer.invoke('ollama:delete', model)
   },
   settings: {
     get: (model) => ipcRenderer.invoke('settings:get', model),

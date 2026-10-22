@@ -1,5 +1,5 @@
 import type { ModelSettings } from './settings'
-import type { ChatChunk, ChatRequest, ModelInfo, OllamaErrorKind, RunningModel } from './ollama'
+import type { ChatChunk, ChatRequest, ModelInfo, OllamaErrorKind, PullProgress, RunningModel } from './ollama'
 
 export interface ApiError {
   message: string
@@ -25,7 +25,7 @@ export interface StreamHandle {
   cancel(): void
 }
 
-export type StreamKind = 'chat'
+export type StreamKind = 'chat' | 'pull'
 
 /** The API exposed to the renderer as `window.api` by the preload script. */
 export interface DesktopApi {
@@ -33,6 +33,8 @@ export interface DesktopApi {
     version(): Promise<Result<string>>
     models(): Promise<Result<ModelsSnapshot>>
     chat(req: ChatRequest, onChunk: (chunk: ChatChunk) => void): StreamHandle
+    pull(model: string, onProgress: (progress: PullProgress) => void): StreamHandle
+    delete(model: string): Promise<Result<null>>
   }
   settings: {
     get(model: string): Promise<Result<{ settings: ModelSettings; saved: boolean }>>

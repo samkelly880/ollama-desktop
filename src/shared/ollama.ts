@@ -63,6 +63,66 @@ export interface ChatChunk {
   eval_duration?: number
 }
 
+/** One line of the streaming /api/pull response. */
+export interface PullProgress {
+  status: string
+  digest?: string
+  total?: number
+  completed?: number
+}
+
+/** Overall download state, combined from the per-layer progress lines. */
+export interface PullState {
+  status: string
+  layers: Record<string, { total: number; completed: number }>
+  /** Sum over all layers seen so far (bytes). */
+  total: number
+  completed: number
+  /** 0–100, or null while the size is still unknown. */
+  percent: number | null
+  done: boolean
+}
+
+export const INITIAL_PULL_STATE: PullState = Object.freeze({
+  status: 'starting',
+  layers: {},
+  total: 0,
+  completed: 0,
+  percent: null,
+  done: false
+}) as PullState
+
+/** Pure reducer: folds one progress line into the overall state. */
+export function reducePull(state: PullState, event: PullProgress): PullState {
+  let layers = state.layers
+  if (event.digest && typeof event.total === 'number') {
+    const previous = layers[event.digest]
+    layers = {
+      ...layers,
+      [event.digest]: {
+        total: event.total,
+        // Never go backwards, even if lines arrive out of order.
+        completed: Math.max(previous?.completed ?? 0, Math.min(event.total, event.completed ?? 0))
+      }
+    }
+  }
+  let total = 0
+  let completed = 0
+  for (const layer of Object.values(layers)) {
+    total += layer.total
+    completed += layer.completed
+  }
+  const done = event.status === 'success'
+  return {
+    status: event.status,
+    layers,
+    total,
+    completed,
+    percent: done ? 100 : total > 0 ? Math.min(100, (completed / total) * 100) : null,
+    done
+  }
+}
+
 export type OllamaErrorKind = 'unreachable' | 'http' | 'aborted' | 'invalid'
 
 export class OllamaError extends Error {
@@ -217,5 +277,26 @@ export class OllamaClient {
     })
     if (!res.body) throw new OllamaError('Ollama sent an empty response', 'invalid')
     yield* readNdjson<ChatChunk>(res.body)
+  }
+
+  /** Downloads (or updates) a model, streaming progress lines. Abort `signal` to cancel. */
+  async *pull(model: string, signal?: AbortSignal): AsyncGenerator<PullProgress> {
+    const res = await this.request('/api/pull', {
+      method: 'POST',
+      // `name` is the older spelling of `model`; sending both works with old and new servers.
+      body: JSON.stringify({ model, name: model, stream: true }),
+      signal
+    })
+    if (!res.body) throw new OllamaError('Ollama sent an empty response', 'invalid')
+    yield* readNdjson<PullProgress>(res.body)
+  }
+
+  /** Removes an installed model and its data from disk. */
+  async deleteModel(model: string, signal?: AbortSignal): Promise<void> {
+    await this.request('/api/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ model, name: model }),
+      signal
+    })
   }
 }

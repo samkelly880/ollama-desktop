@@ -23,6 +23,8 @@ function openStream(client: OllamaClient, kind: StreamKind, payload: unknown, si
   switch (kind) {
     case 'chat':
       return client.chat(validateChatRequest(payload), signal)
+    case 'pull':
+      return client.pull(validateModelName(payload), signal)
     default:
       throw new Error(`Unknown stream kind: ${String(kind)}`)
   }
@@ -37,6 +39,11 @@ export function registerIpc(client: OllamaClient, settings: SettingsStore): void
       client.listRunning(AbortSignal.timeout(5000)).catch(() => [])
     ])
     return { models, running }
+  })
+
+  handle('ollama:delete', async (model: unknown) => {
+    await client.deleteModel(validateModelName(model), AbortSignal.timeout(30000))
+    return null
   })
 
   handle('settings:get', (model: unknown) => settings.get(validateModelName(model)))
