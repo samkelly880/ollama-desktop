@@ -1,0 +1,25 @@
+appId: io.github.samkelly880.ollamadesktop
+productName: Ollama Desktop
+executableName: ollama-desktop
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asar: true
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  icon: build/icon.png
+  maintainer: samkelly880 <293011299+samkelly880@users.noreply.github.com>
+  synopsis: Desktop GUI for a local Ollama server
+  description: An unofficial desktop app for chatting with and managing models on a locally running Ollama server.
+appImage:
+  artifactName: ${name}-${version}-${arch}.${ext}
+deb:
+  artifactName: ${name}_${version}_${arch}.${ext}
+npmRebuild: false
+publish: null
