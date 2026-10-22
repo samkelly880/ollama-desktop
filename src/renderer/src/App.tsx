@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import type { ModelInfo, RunningModel } from '../../shared/ollama'
 import { ModelList } from './components/ModelList'
 import { OfflineNotice } from './components/OfflineNotice'
+import { ChatView } from './components/ChatView'
+import { useChat } from './useChat'
 
 type Status = 'checking' | 'online' | 'offline'
 
@@ -13,6 +15,7 @@ export default function App(): React.JSX.Element {
   const [running, setRunning] = useState<RunningModel[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
+  const chat = useChat()
 
   const refresh = useCallback(async () => {
     setChecking(true)
@@ -63,9 +66,16 @@ export default function App(): React.JSX.Element {
             <ModelList models={models} running={running} selected={selected} onSelect={setSelected} />
           </aside>
           <main className="main">
-            <div className="placeholder muted">
-              {selected ? `Selected: ${selected}` : 'Install a model to get started.'}
-            </div>
+            <ChatView
+              models={models}
+              model={selected}
+              onModelChange={setSelected}
+              messages={chat.messages}
+              streaming={chat.streaming}
+              onSend={(text) => selected && void chat.send(text, selected)}
+              onStop={chat.stop}
+              onClear={chat.clear}
+            />
           </main>
         </div>
       )}

@@ -31,6 +31,38 @@ export interface RunningModel {
   expires_at?: string
 }
 
+export type ChatRole = 'system' | 'user' | 'assistant'
+
+export interface ChatMessage {
+  role: ChatRole
+  content: string
+}
+
+/** Model options passed through to Ollama (subset we expose in the UI). */
+export interface ChatOptions {
+  temperature?: number
+  top_p?: number
+  num_ctx?: number
+}
+
+export interface ChatRequest {
+  model: string
+  messages: ChatMessage[]
+  options?: ChatOptions
+}
+
+/** One line of the streaming /api/chat response. */
+export interface ChatChunk {
+  model: string
+  created_at?: string
+  message?: { role: ChatRole; content: string }
+  done: boolean
+  done_reason?: string
+  total_duration?: number
+  eval_count?: number
+  eval_duration?: number
+}
+
 export type OllamaErrorKind = 'unreachable' | 'http' | 'aborted' | 'invalid'
 
 export class OllamaError extends Error {
@@ -59,6 +91,55 @@ export function assertLocalUrl(url: string): URL {
     throw new OllamaError('Only a local Ollama server (127.0.0.1) is allowed', 'invalid')
   }
   return parsed
+}
+
+function parseLine<T>(line: string): T {
+  let value: unknown
+  try {
+    value = JSON.parse(line)
+  } catch {
+    throw new OllamaError('Ollama sent a response this app could not read', 'invalid')
+  }
+  const maybeError = (value as { error?: unknown } | null)?.error
+  if (typeof maybeError === 'string' && maybeError) throw new OllamaError(maybeError, 'http')
+  return value as T
+}
+
+/**
+ * Parses a newline-delimited JSON stream (what Ollama sends when stream: true).
+ * Handles objects split across network chunks and several objects in one chunk.
+ * A line carrying `{"error": "..."}` is thrown as an OllamaError.
+ */
+export async function* readNdjson<T>(body: ReadableStream<Uint8Array>): AsyncGenerator<T> {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  try {
+    while (true) {
+      let chunk: ReadableStreamReadResult<Uint8Array>
+      try {
+        chunk = await reader.read()
+      } catch (err) {
+        if (isAbortError(err)) throw new OllamaError('Request was cancelled', 'aborted')
+        throw new OllamaError('Lost connection to Ollama', 'unreachable')
+      }
+      if (chunk.done) break
+      buffer += decoder.decode(chunk.value, { stream: true })
+      let newline = buffer.indexOf('\n')
+      while (newline !== -1) {
+        const line = buffer.slice(0, newline).trim()
+        buffer = buffer.slice(newline + 1)
+        if (line) yield parseLine<T>(line)
+        newline = buffer.indexOf('\n')
+      }
+    }
+    buffer += decoder.decode()
+    if (buffer.trim()) yield parseLine<T>(buffer.trim())
+  } finally {
+    // Also runs when the consumer stops early: cancel so the HTTP request is closed.
+    await reader.cancel().catch(() => undefined)
+    reader.releaseLock()
+  }
 }
 
 export interface OllamaClientOptions {
@@ -125,5 +206,16 @@ export class OllamaClient {
   async listRunning(signal?: AbortSignal): Promise<RunningModel[]> {
     const body = await this.getJson<{ models?: RunningModel[] }>('/api/ps', signal)
     return body.models ?? []
+  }
+
+  /** Streams a chat reply chunk by chunk. Abort `signal` to stop generation. */
+  async *chat(req: ChatRequest, signal?: AbortSignal): AsyncGenerator<ChatChunk> {
+    const res = await this.request('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ ...req, stream: true }),
+      signal
+    })
+    if (!res.body) throw new OllamaError('Ollama sent an empty response', 'invalid')
+    yield* readNdjson<ChatChunk>(res.body)
   }
 }
