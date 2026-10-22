@@ -41,6 +41,11 @@ const api: DesktopApi = {
     version: () => ipcRenderer.invoke('ollama:version'),
     models: () => ipcRenderer.invoke('ollama:models'),
     chat: (req, onChunk) => startStream('chat', req, onChunk)
+  },
+  settings: {
+    get: (model) => ipcRenderer.invoke('settings:get', model),
+    set: (model, settings) => ipcRenderer.invoke('settings:set', model, settings),
+    reset: (model) => ipcRenderer.invoke('settings:reset', model)
   }
 }
 

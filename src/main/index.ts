@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { OllamaClient } from '../shared/ollama'
 import { registerIpc } from './ipc'
+import { SettingsStore } from './settingsStore'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -41,7 +42,8 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  registerIpc(new OllamaClient())
+  const settings = new SettingsStore(join(app.getPath('userData'), 'settings.json'))
+  registerIpc(new OllamaClient(), settings)
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

@@ -4,6 +4,9 @@ import { ModelList } from './components/ModelList'
 import { OfflineNotice } from './components/OfflineNotice'
 import { ChatView } from './components/ChatView'
 import { useChat } from './useChat'
+import { SettingsPanel } from './components/SettingsPanel'
+import { useModelSettings } from './useModelSettings'
+import { toChatOptions } from '../../shared/settings'
 
 type Status = 'checking' | 'online' | 'offline'
 
@@ -16,6 +19,8 @@ export default function App(): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const chat = useChat()
+  const modelSettings = useModelSettings(selected)
+  const [showSettings, setShowSettings] = useState(false)
 
   const refresh = useCallback(async () => {
     setChecking(true)
@@ -72,10 +77,35 @@ export default function App(): React.JSX.Element {
               onModelChange={setSelected}
               messages={chat.messages}
               streaming={chat.streaming}
-              onSend={(text) => selected && void chat.send(text, selected)}
+              onSend={(text) =>
+                selected &&
+                void chat.send(text, selected, {
+                  system: modelSettings.settings.systemPrompt,
+                  options: toChatOptions(modelSettings.settings)
+                })
+              }
               onStop={chat.stop}
               onClear={chat.clear}
+              toolbarExtra={
+                <button
+                  className={showSettings ? 'btn active' : 'btn ghost'}
+                  onClick={() => setShowSettings((v) => !v)}
+                  disabled={!selected}
+                >
+                  ⚙ Settings
+                </button>
+              }
             />
+            {showSettings && selected && (
+              <SettingsPanel
+                model={selected}
+                settings={modelSettings.settings}
+                saveState={modelSettings.saveState}
+                onChange={modelSettings.update}
+                onReset={() => void modelSettings.reset()}
+                onClose={() => setShowSettings(false)}
+              />
+            )}
           </main>
         </div>
       )}

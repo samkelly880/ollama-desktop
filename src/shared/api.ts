@@ -1,3 +1,4 @@
+import type { ModelSettings } from './settings'
 import type { ChatChunk, ChatRequest, ModelInfo, OllamaErrorKind, RunningModel } from './ollama'
 
 export interface ApiError {
@@ -32,5 +33,10 @@ export interface DesktopApi {
     version(): Promise<Result<string>>
     models(): Promise<Result<ModelsSnapshot>>
     chat(req: ChatRequest, onChunk: (chunk: ChatChunk) => void): StreamHandle
+  }
+  settings: {
+    get(model: string): Promise<Result<{ settings: ModelSettings; saved: boolean }>>
+    set(model: string, settings: ModelSettings): Promise<Result<ModelSettings>>
+    reset(model: string): Promise<Result<ModelSettings>>
   }
 }

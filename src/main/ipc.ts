@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron'
 import type { ApiError, Result, StreamEnd, StreamKind } from '../shared/api'
 import { OllamaClient, OllamaError } from '../shared/ollama'
-import { validateChatRequest } from './validate'
+import type { SettingsStore } from './settingsStore'
+import { validateChatRequest, validateModelName } from './validate'
 
 export function toApiError(err: unknown): ApiError {
   if (err instanceof OllamaError) return { message: err.message, kind: err.kind }
@@ -27,7 +28,7 @@ function openStream(client: OllamaClient, kind: StreamKind, payload: unknown, si
   }
 }
 
-export function registerIpc(client: OllamaClient): void {
+export function registerIpc(client: OllamaClient, settings: SettingsStore): void {
   handle('ollama:version', () => client.version(AbortSignal.timeout(3000)))
 
   handle('ollama:models', async () => {
@@ -37,6 +38,10 @@ export function registerIpc(client: OllamaClient): void {
     ])
     return { models, running }
   })
+
+  handle('settings:get', (model: unknown) => settings.get(validateModelName(model)))
+  handle('settings:set', (model: unknown, value: unknown) => settings.set(validateModelName(model), value))
+  handle('settings:reset', (model: unknown) => settings.reset(validateModelName(model)))
 
   // Streaming requests (chat replies, model downloads). Each stream has an id chosen by
   // the renderer; data arrives as 'stream:data' events and finishes with one 'stream:end'.
