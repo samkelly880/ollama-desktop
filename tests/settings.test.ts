@@ -8,7 +8,9 @@ import { DEFAULT_SETTINGS, isDefaultSettings, sanitizeSettings, toChatOptions } 
 describe('sanitizeSettings', () => {
   it('fills in defaults for missing or broken values', () => {
     expect(sanitizeSettings(undefined)).toEqual(DEFAULT_SETTINGS)
-    expect(sanitizeSettings({ temperature: 'hot', topP: null, numCtx: 'big', systemPrompt: 5 })).toEqual(DEFAULT_SETTINGS)
+    expect(sanitizeSettings({ temperature: 'hot', topP: null, numCtx: 'big', systemPrompt: 5 })).toEqual(
+      DEFAULT_SETTINGS
+    )
   })
 
   it('clamps out-of-range numbers', () => {

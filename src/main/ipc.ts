@@ -19,7 +19,12 @@ function handle<A extends unknown[], T>(channel: string, fn: (...args: A) => Pro
   })
 }
 
-function openStream(client: OllamaClient, kind: StreamKind, payload: unknown, signal: AbortSignal): AsyncIterable<unknown> {
+function openStream(
+  client: OllamaClient,
+  kind: StreamKind,
+  payload: unknown,
+  signal: AbortSignal
+): AsyncIterable<unknown> {
   switch (kind) {
     case 'chat':
       return client.chat(validateChatRequest(payload), signal)

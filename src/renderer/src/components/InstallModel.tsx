@@ -81,7 +81,9 @@ export function InstallModel({ installed, onInstalled }: Props): React.JSX.Eleme
       </form>
       {trimmed && !valid && <div className="error-text">Use a name like llama3.2 or qwen2.5:7b.</div>}
 
-      {phase.kind === 'pulling' && <PullProgressView name={phase.name} progress={phase.progress} onCancel={() => handleRef.current?.cancel()} />}
+      {phase.kind === 'pulling' && (
+        <PullProgressView name={phase.name} progress={phase.progress} onCancel={() => handleRef.current?.cancel()} />
+      )}
       {phase.kind === 'done' && (
         <div className="success-text">
           Installed {phase.name}
@@ -102,9 +104,9 @@ export function InstallModel({ installed, onInstalled }: Props): React.JSX.Eleme
             (ollama.com/library).
           </p>
           <p className="muted small">
-            Models are large, typically 1–5 GB for small ones and 20 GB+ for big ones. The exact size is shown
-            in the progress bar as soon as the download starts, and you can cancel at any time (Ollama resumes
-            a cancelled download where it left off).
+            Models are large, typically 1–5 GB for small ones and 20 GB+ for big ones. The exact size is shown in the
+            progress bar as soon as the download starts, and you can cancel at any time (Ollama resumes a cancelled
+            download where it left off).
           </p>
         </ConfirmDialog>
       )}
@@ -112,7 +114,15 @@ export function InstallModel({ installed, onInstalled }: Props): React.JSX.Eleme
   )
 }
 
-function PullProgressView({ name, progress, onCancel }: { name: string; progress: PullState; onCancel: () => void }): React.JSX.Element {
+function PullProgressView({
+  name,
+  progress,
+  onCancel
+}: {
+  name: string
+  progress: PullState
+  onCancel: () => void
+}): React.JSX.Element {
   const known = progress.percent !== null
   return (
     <div className="progress" aria-live="polite">
@@ -131,13 +141,19 @@ function PullProgressView({ name, progress, onCancel }: { name: string; progress
       </div>
       <div className="progress-row">
         <span>
-          {progress.total > 0 ? `${formatBytes(progress.completed)} of ${formatBytes(progress.total)}` : progress.status}
+          {progress.total > 0
+            ? `${formatBytes(progress.completed)} of ${formatBytes(progress.total)}`
+            : progress.status}
         </span>
         <button className="icon-btn danger small" onClick={onCancel} type="button">
           Cancel
         </button>
       </div>
-      {progress.total > 0 && <div className="progress-row"><span>{progress.status}</span></div>}
+      {progress.total > 0 && (
+        <div className="progress-row">
+          <span>{progress.status}</span>
+        </div>
+      )}
     </div>
   )
 }

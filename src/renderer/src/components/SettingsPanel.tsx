@@ -41,7 +41,9 @@ export function SettingsPanel({ model, settings, saveState, onChange, onReset, o
           value={settings.temperature}
           onChange={(e) => onChange({ temperature: Number(e.target.value) })}
         />
-        <div className="hint">Lower = focused and repeatable. Higher = more creative. Default {DEFAULT_SETTINGS.temperature}.</div>
+        <div className="hint">
+          Lower = focused and repeatable. Higher = more creative. Default {DEFAULT_SETTINGS.temperature}.
+        </div>
       </div>
 
       <div className="field">
@@ -57,7 +59,9 @@ export function SettingsPanel({ model, settings, saveState, onChange, onReset, o
           value={settings.topP}
           onChange={(e) => onChange({ topP: Number(e.target.value) })}
         />
-        <div className="hint">Only consider the most likely words adding up to this share. Default {DEFAULT_SETTINGS.topP}.</div>
+        <div className="hint">
+          Only consider the most likely words adding up to this share. Default {DEFAULT_SETTINGS.topP}.
+        </div>
       </div>
 
       <div className="field">
@@ -76,7 +80,9 @@ export function SettingsPanel({ model, settings, saveState, onChange, onReset, o
             else if (Number.isFinite(n) && n >= LIMITS.numCtx.min) onChange({ numCtx: n })
           }}
         />
-        <div className="hint">How much of the conversation the model can see. Bigger uses more memory. Leave empty for the default.</div>
+        <div className="hint">
+          How much of the conversation the model can see. Bigger uses more memory. Leave empty for the default.
+        </div>
       </div>
 
       <div className="field">
@@ -96,7 +102,13 @@ export function SettingsPanel({ model, settings, saveState, onChange, onReset, o
           Reset to defaults
         </button>
         <span className="saved">
-          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved ✓' : saveState === 'error' ? 'Could not save' : ''}
+          {saveState === 'saving'
+            ? 'Saving…'
+            : saveState === 'saved'
+              ? 'Saved ✓'
+              : saveState === 'error'
+                ? 'Could not save'
+                : ''}
         </span>
       </div>
     </aside>

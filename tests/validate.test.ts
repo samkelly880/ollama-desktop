@@ -3,7 +3,12 @@ import { validateChatOptions, validateChatRequest, validateModelName } from '../
 
 describe('validateModelName', () => {
   it('accepts normal Ollama model names', () => {
-    for (const name of ['llama3.2', 'qwen2.5:7b', 'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M', 'user/model:latest']) {
+    for (const name of [
+      'llama3.2',
+      'qwen2.5:7b',
+      'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M',
+      'user/model:latest'
+    ]) {
       expect(validateModelName(name)).toBe(name)
     }
     expect(validateModelName('  llama3.2  ')).toBe('llama3.2')

@@ -67,7 +67,9 @@ export function ChatView(props: Props): React.JSX.Element {
         {messages.length === 0 ? (
           <div className="chat-empty">
             <h2>{model ? `Chat with ${model}` : 'No model selected'}</h2>
-            <p>{model ? 'Everything stays on this computer.' : 'Install a model from the sidebar to start chatting.'}</p>
+            <p>
+              {model ? 'Everything stays on this computer.' : 'Install a model from the sidebar to start chatting.'}
+            </p>
           </div>
         ) : (
           messages.map((m) => (
@@ -88,7 +90,9 @@ export function ChatView(props: Props): React.JSX.Element {
         <div className="composer-inner">
           <textarea
             value={draft}
-            placeholder={model ? `Message ${model}… (Enter to send, Shift+Enter for a new line)` : 'Select a model first'}
+            placeholder={
+              model ? `Message ${model}… (Enter to send, Shift+Enter for a new line)` : 'Select a model first'
+            }
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {

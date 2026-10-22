@@ -10,7 +10,15 @@ interface Props {
   onCancel: () => void
 }
 
-export function ConfirmDialog({ title, children, confirmLabel, danger, busy, onConfirm, onCancel }: Props): React.JSX.Element {
+export function ConfirmDialog({
+  title,
+  children,
+  confirmLabel,
+  danger,
+  busy,
+  onConfirm,
+  onCancel
+}: Props): React.JSX.Element {
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {

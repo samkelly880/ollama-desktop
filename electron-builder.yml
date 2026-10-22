@@ -13,6 +13,7 @@ linux:
     - AppImage
     - deb
   category: Development
+  syncDesktopName: true
   icon: build/icon.png
   maintainer: samkelly880 <293011299+samkelly880@users.noreply.github.com>
   synopsis: Desktop GUI for a local Ollama server

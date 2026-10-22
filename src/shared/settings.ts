@@ -40,11 +40,12 @@ export function sanitizeSettings(input: unknown): ModelSettings {
       ? null
       : Math.round(clamp(raw.numCtx, LIMITS.numCtx.min, LIMITS.numCtx.max, Number.NaN))
   return {
-    temperature: round2(clamp(raw.temperature, LIMITS.temperature.min, LIMITS.temperature.max, DEFAULT_SETTINGS.temperature)),
+    temperature: round2(
+      clamp(raw.temperature, LIMITS.temperature.min, LIMITS.temperature.max, DEFAULT_SETTINGS.temperature)
+    ),
     topP: round2(clamp(raw.topP, LIMITS.topP.min, LIMITS.topP.max, DEFAULT_SETTINGS.topP)),
     numCtx: Number.isFinite(numCtx) ? numCtx : null,
-    systemPrompt:
-      typeof raw.systemPrompt === 'string' ? raw.systemPrompt.slice(0, LIMITS.systemPromptMaxLength) : ''
+    systemPrompt: typeof raw.systemPrompt === 'string' ? raw.systemPrompt.slice(0, LIMITS.systemPromptMaxLength) : ''
   }
 }
 

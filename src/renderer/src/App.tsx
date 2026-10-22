@@ -41,9 +41,7 @@ export default function App(): React.JSX.Element {
     setVersion(v.value)
     setModels(m.value.models)
     setRunning(m.value.running)
-    setSelected((cur) =>
-      cur && m.value.models.some((x) => x.name === cur) ? cur : (m.value.models[0]?.name ?? null)
-    )
+    setSelected((cur) => (cur && m.value.models.some((x) => x.name === cur) ? cur : (m.value.models[0]?.name ?? null)))
   }, [])
 
   const confirmDelete = async (): Promise<void> => {
